@@ -1,0 +1,17 @@
+{
+  "domain": "journiv",
+  "name": "Journiv",
+  "categories": ["productivity_information"],
+  "codeowners": ["@aled2305"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/aled2305/ha-journiv",
+  "homekit": {},
+  "integration_type": "service",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/aled2305/ha-journiv/issues",
+  "requirements": [],
+  "ssdp": [],
+  "version": "0.1.0",
+  "zeroconf": []
+}

@@ -1,0 +1,104 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "step": {
+      "journals": {
+        "data": {
+          "journal_ids": "Journals"
+        },
+        "data_description": {
+          "journal_ids": "Select the journals whose statistics you want to monitor."
+        },
+        "description": "Choose which journals to add to Home Assistant. You can change this selection later."
+      },
+      "user": {
+        "data": {
+          "email": "[%key:common::config_flow::data::email%]",
+          "host": "[%key:common::config_flow::data::host%]",
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "email": "The email address used to sign in to Journiv.",
+          "host": "The full URL of your Journiv server, for example `{example_url}`.",
+          "password": "The password for your Journiv account."
+        },
+        "description": "Enter your Journiv server and account details. Include `{http_scheme}` or `{https_scheme}` in the server URL. If Journiv uses a non-standard port, include it in the URL, for example `{example_url}`."
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "archived": {
+        "name": "Archived"
+      },
+      "favorite": {
+        "name": "Favorite"
+      }
+    },
+    "sensor": {
+      "average_words_per_entry": {
+        "name": "Average words per entry"
+      },
+      "current_streak": {
+        "name": "Current writing streak"
+      },
+      "entry_count": {
+        "name": "Entries"
+      },
+      "last_entry": {
+        "name": "Last entry"
+      },
+      "last_entry_date": {
+        "name": "Last entry date"
+      },
+      "last_mood_log_date": {
+        "name": "Last mood log date"
+      },
+      "longest_streak": {
+        "name": "Longest writing streak"
+      },
+      "mood_current_streak": {
+        "name": "Current mood logging streak"
+      },
+      "mood_days_logged": {
+        "name": "Mood days logged"
+      },
+      "mood_logs_30_days": {
+        "name": "Mood logs (30 days)"
+      },
+      "most_frequent_mood_30_days": {
+        "name": "Most frequent mood (30 days)"
+      },
+      "total_entries": {
+        "name": "Total entries"
+      },
+      "total_words": {
+        "name": "Total words"
+      }
+    }
+  },
+  "options": {
+    "abort": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    },
+    "step": {
+      "init": {
+        "data": {
+          "journal_ids": "Journals"
+        },
+        "data_description": {
+          "journal_ids": "Select the journals whose statistics you want to monitor."
+        }
+      }
+    }
+  }
+}
