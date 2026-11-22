@@ -10,7 +10,7 @@ from .coordinator import JournivConfigEntry, JournivDataUpdateCoordinator
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: JournivConfigEntry) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: JournivConfigEntry) -> bool:
     """Set up Journiv from a config entry."""
     previous_coordinator = getattr(entry, "runtime_data", None)
     if isinstance(previous_coordinator, JournivDataUpdateCoordinator):
@@ -24,8 +24,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: JournivConfigEntry) -> N
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: JournivConfigEntry) -> None:
+async def async_unload_entry(hass: HomeAssistant, entry: JournivConfigEntry) -> bool:
     """Unload a config entry."""
-    await hass.config_entries.async_unload_platforms_or_raise(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
