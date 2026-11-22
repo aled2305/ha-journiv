@@ -32,17 +32,21 @@ Monitor your [Journiv](https://www.journiv.com) account and selected journals in
 
 ## Installation
 
-### HACS
+### Marketplace / HACS
 
-Until Journiv is included in the default HACS repository list:
+Journiv is awaiting inclusion in the default Marketplace catalogue. Until then, add it as a custom repository:
 
-1. Open HACS in Home Assistant.
-2. Select **Integrations**, then open the three-dot menu and choose **Custom repositories**.
-3. Add `https://github.com/aled2305/ha-journiv` with the category **Integration**.
-4. Search for **Journiv** and install it.
-5. Restart Home Assistant.
+1. Open **Marketplace** in Home Assistant.
+2. Open the three-dot menu and select **Custom repositories**.
+3. Enter `https://github.com/aled2305/ha-journiv`.
+4. Select **Integration** as the category and add the repository.
+5. Search for **Journiv** and select **Install**.
+6. Restart Home Assistant.
+7. Go to **Settings** > **Devices & services** > **Add integration** and search for **Journiv**.
 
-### Manual
+After installation, future releases can be installed normally through Marketplace.
+
+### Manual installation
 
 Copy `custom_components/journiv` into the `custom_components` directory in your Home Assistant configuration directory, then restart Home Assistant.
 
