@@ -12,7 +12,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import CONF_HOST, UnitOfTime
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -22,6 +22,7 @@ from homeassistant.util import dt as dt_util
 from .api import JournivJournal
 from .const import CONF_JOURNAL_IDS, DOMAIN
 from .coordinator import JournivConfigEntry, JournivData, JournivDataUpdateCoordinator
+from .entity import JournivEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -162,20 +163,31 @@ async def async_setup_entry(
     coordinator = entry.runtime_data
     selected_journal_ids = entry.options.get(CONF_JOURNAL_IDS, [])
     async_add_entities(
-        [
-            JournivAccountSensor(coordinator, entry, description)
-            for description in ACCOUNT_SENSORS
-        ]
-        + [
-            JournivSensor(coordinator, entry, journal_id, description)
-            for journal_id in selected_journal_ids
-            if journal_id in coordinator.data.journals
-            for description in SENSORS
-        ]
+        JournivAccountSensor(coordinator, entry, description)
+        for description in ACCOUNT_SENSORS
     )
+    known_journal_ids: set[str] = set()
+
+    @callback
+    def _async_add_new_journals() -> None:
+        """Add entities for selected journals that have become available."""
+        new_journal_ids = (
+            set(selected_journal_ids) & coordinator.data.journals.keys()
+        ) - known_journal_ids
+        if not new_journal_ids:
+            return
+        async_add_entities(
+            JournivSensor(coordinator, entry, journal_id, description)
+            for journal_id in sorted(new_journal_ids)
+            for description in SENSORS
+        )
+        known_journal_ids.update(new_journal_ids)
+
+    _async_add_new_journals()
+    entry.async_on_unload(coordinator.async_add_listener(_async_add_new_journals))
 
 
-class JournivSensor(CoordinatorEntity[JournivDataUpdateCoordinator], SensorEntity):
+class JournivSensor(JournivEntity, SensorEntity):
     """Represent a Journiv journal statistic."""
 
     _attr_has_entity_name = True
@@ -189,24 +201,10 @@ class JournivSensor(CoordinatorEntity[JournivDataUpdateCoordinator], SensorEntit
         description: JournivSensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator)
-        journal = coordinator.data.journals[journal_id]
+        super().__init__(coordinator, entry, journal_id)
         self.entity_description = description
-        self._journal_id = journal_id
-        self._attr_unique_id = f"{journal_id}_{description.key}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, journal_id)},
-            name=journal["title"],
-            manufacturer="Journiv",
-            model="Journal",
-            configuration_url=entry.data[CONF_HOST],
-        )
-
-    @property
-    @override
-    def available(self) -> bool:
-        """Return whether the journal is available."""
-        return super().available and self._journal_id in self.coordinator.data.journals
+        account_id = entry.unique_id or entry.entry_id
+        self._attr_unique_id = f"{account_id}_{journal_id}_{description.key}"
 
     @property
     @override

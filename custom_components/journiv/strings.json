@@ -6,6 +6,7 @@
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "invalid_url": "Invalid server URL",
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "step": {
@@ -18,6 +19,17 @@
         },
         "description": "Choose which journals to add to Home Assistant. You can change this selection later."
       },
+      "reauth_confirm": {
+        "data": {
+          "email": "[%key:common::config_flow::data::email%]",
+          "password": "[%key:common::config_flow::data::password%]"
+        },
+        "data_description": {
+          "email": "The email address used to sign in to Journiv.",
+          "password": "The password for your Journiv account."
+        },
+        "description": "Enter updated credentials for the Journiv server at `{host}`."
+      },
       "user": {
         "data": {
           "email": "[%key:common::config_flow::data::email%]",
@@ -29,7 +41,7 @@
           "host": "The full URL of your Journiv server, for example `{example_url}`.",
           "password": "The password for your Journiv account."
         },
-        "description": "Enter your Journiv server and account details. Include `{http_scheme}` or `{https_scheme}` in the server URL. If Journiv uses a non-standard port, include it in the URL, for example `{example_url}`."
+        "description": "Enter your Journiv server and account details. Use `{https_scheme}` whenever possible because `{http_scheme}` sends credentials and tokens without encryption. If Journiv uses a non-standard port, include it in the URL, for example `{example_url}`."
       }
     }
   },
@@ -85,7 +97,7 @@
     }
   },
   "options": {
-    "abort": {
+    "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]"

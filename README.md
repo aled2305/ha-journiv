@@ -54,7 +54,9 @@ Copy `custom_components/journiv` into the `custom_components` directory in your 
 
 In Home Assistant, go to **Settings** > **Devices & services** > **Add integration** and search for **Journiv**. Enter the full URL of your Journiv server and your account credentials, then select the journals you want to monitor.
 
-The integration communicates directly with the Journiv server URL you provide. Credentials and authentication tokens are stored in Home Assistant's config entry storage.
+The integration communicates directly with the Journiv server URL you provide. Use HTTPS whenever possible; HTTP sends account credentials and authentication tokens without transport encryption.
+
+When Journiv provides a refresh token, the integration stores that token instead of retaining the account password. If the token expires or is revoked, Home Assistant starts a reauthentication flow so you can enter updated credentials.
 
 ## Requirements
 

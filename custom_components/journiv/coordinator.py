@@ -104,12 +104,8 @@ class JournivDataUpdateCoordinator(DataUpdateCoordinator[JournivData]):
     async def _async_authenticate(self) -> None:
         """Authenticate using a refresh token when possible."""
         if refresh_token := self.config_entry.data.get(CONF_REFRESH_TOKEN):
-            try:
-                await self.api.refresh_access_token(refresh_token)
-            except JournivAuthenticationError:
-                pass
-            else:
-                return
+            await self.api.refresh_access_token(refresh_token)
+            return
 
         await self.api.authenticate(
             email=self.config_entry.data[CONF_EMAIL],

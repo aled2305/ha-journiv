@@ -2,13 +2,13 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.const import CONF_EMAIL, CONF_HOST, CONF_PASSWORD
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.journiv.api import JournivApi
 from custom_components.journiv.const import CONF_JOURNAL_IDS, DOMAIN
+from homeassistant.const import CONF_EMAIL, CONF_HOST, CONF_PASSWORD
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 
 TEST_HOST = "http://journiv.example.com"
 TEST_JOURNAL_ID = "11111111-1111-1111-1111-111111111111"
@@ -122,7 +122,7 @@ async def test_selected_journal_sensors(
     assert most_frequent_mood.state == "Happy"
 
     device = device_registry.async_get_device_by_identifier(
-        (DOMAIN, TEST_JOURNAL_ID), entry.entry_id
+        (DOMAIN, f"{entry.unique_id}_{TEST_JOURNAL_ID}"), entry.entry_id
     )
     assert device is not None
     assert device.name == "Personal"
@@ -135,3 +135,47 @@ async def test_selected_journal_sensors(
     assert account_device is not None
     assert account_device.name == "Aled's overview"
     assert account_device.model == "Account"
+
+
+async def test_selected_journal_added_when_it_becomes_available(
+    hass: HomeAssistant,
+) -> None:
+    """Test a selected journal gets entities after it becomes available."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="test@example.com",
+        unique_id=f"{TEST_HOST}#user-id",
+        version=2,
+        data={
+            CONF_HOST: TEST_HOST,
+            CONF_EMAIL: "test@example.com",
+            CONF_PASSWORD: "test-password",
+        },
+        options={CONF_JOURNAL_IDS: [TEST_SECOND_JOURNAL_ID]},
+    )
+    entry.add_to_hass(hass)
+    api = MagicMock(spec=JournivApi)
+    api.access_token = None
+    api.refresh_token = None
+    api.authenticate = AsyncMock()
+    api.get_journals = AsyncMock(return_value=[TEST_JOURNALS[0]])
+    api.get_writing_analytics = AsyncMock(return_value=TEST_WRITING_ANALYTICS)
+    api.get_mood_statistics = AsyncMock(return_value=TEST_MOOD_STATISTICS)
+    api.get_mood_streak = AsyncMock(return_value=TEST_MOOD_STREAK)
+    api.get_current_user = AsyncMock(
+        return_value={"id": "user-id", "email": entry.title, "name": "Aled"}
+    )
+
+    with patch("custom_components.journiv.JournivApi", return_value=api):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.travel_entries") is None
+    assert hass.states.get("binary_sensor.travel_favorite") is None
+
+    entry.runtime_data.data.journals[TEST_SECOND_JOURNAL_ID] = TEST_JOURNALS[1]
+    entry.runtime_data.async_update_listeners()
+    await hass.async_block_till_done()
+
+    assert hass.states.get("sensor.travel_entries") is not None
+    assert hass.states.get("binary_sensor.travel_favorite") is not None

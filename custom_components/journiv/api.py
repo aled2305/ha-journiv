@@ -3,6 +3,26 @@
 from typing import Any, NotRequired, TypedDict
 
 from aiohttp import ClientError, ClientSession
+from yarl import URL
+
+
+def normalize_host(raw_host: str) -> str | None:
+    """Return a normalized Journiv origin, or None for an unsafe URL."""
+    try:
+        url = URL(raw_host.strip())
+    except ValueError:
+        return None
+    if (
+        url.scheme not in ("http", "https")
+        or not url.host
+        or url.user is not None
+        or url.password is not None
+        or url.query
+        or url.fragment
+        or url.path not in ("", "/")
+    ):
+        return None
+    return str(url.origin())
 
 
 class JournivApiError(Exception):
@@ -81,7 +101,9 @@ class JournivApi:
     ) -> None:
         """Initialize the API client."""
         self.session = session
-        self.host = host.rstrip("/")
+        if (normalized_host := normalize_host(host)) is None:
+            raise ValueError("Invalid Journiv host URL")
+        self.host = normalized_host
         self.access_token: str | None = None
         self.refresh_token: str | None = None
 

@@ -2,14 +2,15 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from homeassistant.config_entries import ConfigEntryState
-from homeassistant.const import CONF_EMAIL, CONF_HOST, CONF_PASSWORD
-from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.journiv.api import JournivApi
 from custom_components.journiv.const import CONF_REFRESH_TOKEN, DOMAIN
 from custom_components.journiv.coordinator import JournivDataUpdateCoordinator
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.const import CONF_EMAIL, CONF_HOST, CONF_PASSWORD
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 
 TEST_HOST = "http://journiv.example.com"
 TEST_PASSWORD = "test-password"
@@ -155,3 +156,72 @@ async def test_reload_uses_refresh_token(hass: HomeAssistant) -> None:
     api.get_journals.assert_awaited_once_with()
     api.refresh_access_token.assert_awaited_once_with(TEST_REFRESH_TOKEN)
     api.authenticate.assert_not_awaited()
+
+
+async def test_migrate_entry(
+    hass: HomeAssistant,
+    device_registry: dr.DeviceRegistry,
+    entity_registry: er.EntityRegistry,
+    mock_setup_entry: AsyncMock,
+) -> None:
+    """Test legacy credentials, entities, and devices are migrated."""
+    user_id = "12345678-1234-1234-1234-123456789abc"
+    journal_id = "11111111-1111-1111-1111-111111111111"
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="first@example.com",
+        unique_id=user_id,
+        version=1,
+        data={
+            CONF_HOST: f"{TEST_HOST}/",
+            CONF_EMAIL: "first@example.com",
+            CONF_PASSWORD: TEST_PASSWORD,
+            CONF_REFRESH_TOKEN: TEST_REFRESH_TOKEN,
+        },
+    )
+    entry.add_to_hass(hass)
+    account_entity = entity_registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"{user_id}_current_streak",
+        config_entry=entry,
+    )
+    journal_entity = entity_registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        f"{journal_id}_entry_count",
+        config_entry=entry,
+    )
+    account_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, user_id)},
+    )
+    journal_device = device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, journal_id)},
+    )
+
+    assert await hass.config_entries.async_setup(entry.entry_id)
+
+    new_account_id = f"{TEST_HOST}#{user_id}"
+    assert entry.version == 2
+    assert entry.unique_id == new_account_id
+    assert entry.data == {
+        CONF_HOST: TEST_HOST,
+        CONF_EMAIL: "first@example.com",
+        CONF_REFRESH_TOKEN: TEST_REFRESH_TOKEN,
+    }
+    assert entity_registry.async_get(account_entity.entity_id).unique_id == (
+        f"{new_account_id}_current_streak"
+    )
+    assert entity_registry.async_get(journal_entity.entity_id).unique_id == (
+        f"{new_account_id}_{journal_id}_entry_count"
+    )
+    assert device_registry.async_get(account_device.id).identifiers == {
+        (DOMAIN, new_account_id)
+    }
+    assert device_registry.async_get(journal_device.id).identifiers == {
+        (DOMAIN, f"{new_account_id}_{journal_id}")
+    }
+
+    assert len(mock_setup_entry.mock_calls) == 1
