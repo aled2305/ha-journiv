@@ -116,6 +116,7 @@ jobs:
     steps:
       - name: Publish GitHub release
         env:
+          GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
